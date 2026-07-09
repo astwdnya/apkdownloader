@@ -1,13 +1,15 @@
 # Telethon (MTProto Telegram client)
-telethon==1.36.2
+# Last available: 1.44.0 — we use a flexible range so Render's Docker build
+# never fails because of a yanked or non-existent version.
+telethon>=1.36.0,<2.0
 
 # HTTP + HTML parsing (for uptodown.com scraping)
-requests==2.32.3
-beautifulsoup4==4.12.3
-lxml==5.3.0
+requests>=2.31.0,<3.0
+beautifulsoup4>=4.12.0,<5.0
+lxml>=4.9.0,<6.0
 
 # Environment variables
-python-dotenv==1.0.1
+python-dotenv>=1.0.0,<2.0
 
-# Cryptography (telethon dependency, performance boost)
-cryptg==0.4.0
+# Cryptography (telethon performance boost — optional but recommended)
+cryptg>=0.4.0,<1.0
