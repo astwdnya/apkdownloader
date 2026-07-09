@@ -114,7 +114,12 @@ def detect_bare_package(text: str) -> Optional[str]:
 
 def fetch_play_store_app_name(package: str) -> str:
     """Fetch the Play Store page and extract the app title.
-    No authentication needed — just an HTTP GET."""
+    No authentication needed — just an HTTP GET.
+
+    Play Store <title> is typically "AppName - Apps on Google Play".
+    We strip the " - Apps on Google Play" suffix to get a clean app name
+    suitable for searching on Uptodown.
+    """
     url = f"https://play.google.com/store/apps/details?id={package}&hl=en"
     try:
         r = requests.get(
@@ -125,20 +130,35 @@ def fetch_play_store_app_name(package: str) -> str:
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                     "AppleWebKit/537.36 Chrome/121.0.0.0 Safari/537.36"
                 ),
+                "Accept-Language": "en,en-US;q=0.9",
             },
         )
         if r.status_code != 200:
             return package
-        # The <title> tag usually contains "AppName - Apps on Google Play"
+        # Try og:title meta first (more reliable, contains just the app name)
+        m = re.search(
+            r'<meta\s+property="og:title"\s+content="([^"]+)"',
+            r.text,
+        )
+        if m:
+            title = m.group(1).strip()
+            if title:
+                return title
+        # Fallback: <title> tag, strip the " - Apps on Google Play" suffix
         m = re.search(r"<title>([^<]+)</title>", r.text)
         if m:
-            title = m.group(1).split(" - ")[0].split(" – ")[0].strip()
-            if title and "Apps on Google Play" not in title:
-                return title
-        # Fallback: og:title meta
-        m = re.search(r'<meta\s+property="og:title"\s+content="([^"]+)"', r.text)
-        if m:
-            return m.group(1).strip()
+            raw = m.group(1).strip()
+            # Remove various suffixes Google uses
+            for sep in (" - Apps on Google Play", " – Apps on Google Play"):
+                if raw.endswith(sep):
+                    raw = raw[: -len(sep)].strip()
+                    break
+            # Also handle the dash-separated form
+            for sep in (" - Apps on Google Play", " – Apps on Google Play"):
+                if sep in raw:
+                    raw = raw.split(sep)[0].strip()
+            if raw and "Apps on Google Play" not in raw:
+                return raw
     except Exception as exc:  # noqa: BLE001
         logger.warning("fetch_play_store_app_name failed: %s", exc)
     return package
