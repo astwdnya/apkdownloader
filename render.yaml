@@ -1,0 +1,31 @@
+# Render.com deployment config
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Push this repo to GitHub, then in Render:
+#   New -> Blueprint -> select the repo -> Render will pick up this file.
+
+services:
+  - type: worker   # long-running bot, no HTTP port needed
+    name: telegram-apk-bot
+    env: docker
+    region: frankfurt   # change to your preferred region
+    plan: starter       # bump up if you expect many concurrent users
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: API_ID
+        value: "2040"
+      - key: API_HASH
+        value: b18441a1ff607e10a989891a5462e627
+      - key: BOT_TOKEN
+        sync: false
+      - key: SESSION_NAME
+        value: apk_bot
+      - key: ALLOWED_USER_IDS
+        sync: false
+      - key: UPTODOWN_LANG
+        value: en
+      - key: MAX_VERSIONS
+        value: "8"
+      - key: LOG_LEVEL
+        value: INFO
